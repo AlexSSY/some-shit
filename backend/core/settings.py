@@ -154,7 +154,8 @@ SPECTACULAR_SETTINGS = {
     ],
     "SERVE_PERMISSIONS": [
         'rest_framework.permissions.AllowAny'
-    ]
+    ],
+    "COMPONENT_SPLIT_REQUEST": True
 }
 
 DRF_STANDARDIZED_ERRORS = {
