@@ -24,7 +24,8 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework import serializers
 
-from .serializers import UserRetrieve
+from .serializers import UserRetrieve, UserCreate
+from .models import User, UserManager
 from core.SchemaSerializers import AuthTokenRequestBody, AuthTokenResponse
 
 
@@ -107,7 +108,6 @@ def destroy_auth_token(request):
     }
 )
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
 def get_me(request):
     me = request.user
     serializer = UserRetrieve(me)
@@ -115,5 +115,35 @@ def get_me(request):
     return Response(serialized_data, status.HTTP_200_OK)
 
 
-def change_email(request):
-    pass
+@extend_schema(
+        auth=(),
+        description=_('Create new unique user'),
+        request=UserCreate,
+        responses={
+            status.HTTP_201_CREATED: UserRetrieve
+        }
+)
+@api_view(['POST'])
+@permission_classes([])
+@parser_classes([parsers.JSONParser, parsers.FormParser, parsers.MultiPartParser])
+def create(request):
+    """
+    Request body:
+
+    email: char_field
+    password: char_field
+    password2: char_field
+    first_name: char_field optional
+    last_name: char_field optional
+
+    """
+    user_create_serializer = UserCreate(data=request.data)
+    user_create_serializer.is_valid(raise_exception=True)
+    validated_data = user_create_serializer.validated_data
+    password = validated_data['password']
+    new_user: User = user_create_serializer.create(validated_data)
+    new_user.set_password(password)
+    new_user.save(force_update=True)
+    user_retrieve_serializer = UserRetrieve(new_user)
+    returned_data = user_retrieve_serializer.data
+    return Response(data=returned_data, status=status.HTTP_201_CREATED)
