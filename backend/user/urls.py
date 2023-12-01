@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import get_user
+from .views import get_me
+
 
 urlpatterns = [
-    path('<int:pk>', get_user),
+    path('me', get_me),
 ]

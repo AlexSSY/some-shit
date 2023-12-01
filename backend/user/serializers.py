@@ -1,4 +1,7 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
+
 from .models import User
 
 
