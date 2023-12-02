@@ -3,6 +3,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
+import uuid
 
 
 class UserManager(BaseUserManager):
@@ -41,6 +42,7 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     username = None
     email = models.EmailField(verbose_name=_('Email'), max_length=255, unique=True)
+    email_verified = models.BooleanField(verbose_name=_('Email verified'), default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -50,3 +52,8 @@ class User(AbstractUser):
     class Meta:
         verbose_name = _('User')
         verbose_name_plural = _('Users')
+
+
+class EmailVerification(models.Model):
+    token = models.CharField(verbose_name=_('Token'), unique=True, max_length=255, default=uuid.uuid4)
+    user = models.OneToOneField(to=User, on_delete=models.CASCADE)

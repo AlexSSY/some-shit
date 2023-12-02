@@ -1,12 +1,17 @@
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.contrib.sites.shortcuts import get_current_site
+from django.conf import settings
 
 from drf_spectacular.utils import (
     extend_schema, 
     OpenApiResponse, 
     OpenApiExample,
-    OpenApiRequest,
-    inline_serializer
+    OpenApiParameter
 )
+from drf_spectacular.types import OpenApiTypes
 
 from drf_standardized_errors.openapi_serializers import Error403Serializer
 
@@ -22,10 +27,11 @@ from rest_framework.response import Response
 from rest_framework import status, parsers, renderers
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.authtoken.models import Token
-from rest_framework import serializers
+from rest_framework import exceptions
 
 from .serializers import UserRetrieve, UserCreate
-from .models import User, UserManager
+from .models import User, EmailVerification
+from .decorators import email_verified
 from core.SchemaSerializers import AuthTokenRequestBody, AuthTokenResponse
 
 
@@ -57,8 +63,10 @@ from core.SchemaSerializers import AuthTokenRequestBody, AuthTokenResponse
 def get_auth_token(request):
     serializer = AuthTokenSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    user = serializer.validated_data['user']
+    user: User = serializer.validated_data['user']
     token, created = Token.objects.get_or_create(user=user)
+    user.last_login = timezone.now()
+    user.save()
     return Response({'token': token.key})
 
 
@@ -108,6 +116,7 @@ def destroy_auth_token(request):
     }
 )
 @api_view(['GET'])
+@email_verified
 def get_me(request):
     me = request.user
     serializer = UserRetrieve(me)
@@ -127,23 +136,46 @@ def get_me(request):
 @permission_classes([])
 @parser_classes([parsers.JSONParser, parsers.FormParser, parsers.MultiPartParser])
 def create(request):
-    """
-    Request body:
-
-    email: char_field
-    password: char_field
-    password2: char_field
-    first_name: char_field optional
-    last_name: char_field optional
-
-    """
     user_create_serializer = UserCreate(data=request.data)
     user_create_serializer.is_valid(raise_exception=True)
     validated_data = user_create_serializer.validated_data
-    password = validated_data['password']
-    new_user: User = user_create_serializer.create(validated_data)
-    new_user.set_password(password)
-    new_user.save(force_update=True)
+    new_user = user_create_serializer.create(validated_data)
     user_retrieve_serializer = UserRetrieve(new_user)
     returned_data = user_retrieve_serializer.data
     return Response(data=returned_data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+def send_email_verification(request):
+    verification, created = EmailVerification.objects.get_or_create(user=request.user)
+    current_site = get_current_site(request)
+    mail_subject = _('Activate your account.')
+    message = render_to_string('verification_email.html', {
+                'user': request.user,
+                'domain': current_site.domain,
+                'token': verification.token,
+            })
+    to_email = request.user.email
+    send_mail(mail_subject, message, settings.EMAIL_HOST_USER, [to_email])
+    return Response(status=status.HTTP_204_NO_CONTENT)
+
+@extend_schema(
+        auth=(),
+        description=_('Email activation'),
+        parameters=[
+            OpenApiParameter(
+                name='token', 
+                type=OpenApiTypes.STR, 
+                description=_('Activation token')
+            )
+        ]
+)
+@api_view(['GET'])
+@permission_classes([])
+def email_activate(request, token):
+    email_verification = EmailVerification.objects.filter(token=token).first()
+    if not email_verification:
+        raise exceptions.AuthenticationFailed(detail=_('invalid activation token'))
+    email_verification.user.email_verified = True
+    email_verification.user.save()
+    return Response(status=status.HTTP_204_NO_CONTENT)

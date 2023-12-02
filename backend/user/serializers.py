@@ -10,8 +10,22 @@ from .models import User
 class UserRetrieve(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name', 'is_active')
-        read_only_fields = ('id', 'email', 'first_name', 'last_name', 'is_active')
+        fields = (
+            'id', 
+            'email', 
+            'first_name', 
+            'last_name', 
+            'is_active', 
+            'email_verified'
+        )
+        read_only_fields = (
+            'id', 
+            'email', 
+            'first_name', 
+            'last_name', 
+            'is_active', 
+            'email_verified'
+            )
 
 
 @extend_schema_serializer(
@@ -45,9 +59,12 @@ class UserCreate(serializers.ModelSerializer):
         return super().validate(attrs)
     
     def create(self, validated_data):
-        validated_data.pop('password')
+        password = validated_data.pop('password')
         validated_data.pop('password1')
-        return super().create(validated_data)
+        new_user = super().create(validated_data)
+        new_user.set_password(password)
+        new_user.save(force_update=True)
+        return new_user
 
     class Meta:
         model = User
