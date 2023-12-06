@@ -1,4 +1,4 @@
-from .get_me import get_me
+from .get_current_user import get_current_user
 from .create_new_user import create_new_user
 from .change_user_email import change_user_email
 from .send_verification_code_to_email import send_verification_code_to_email

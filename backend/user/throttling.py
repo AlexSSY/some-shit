@@ -2,6 +2,6 @@ from rest_framework.throttling import UserRateThrottle
 
 
 class SendEmailThrottle(UserRateThrottle):
-    """Ограничение на один запрос в минуту"""
+    """Ограничение количества запросов."""
 
     scope = "send_email"

@@ -4,7 +4,6 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from .models import User
-from . import services
 
 
 class UserRetrieveSerializer(serializers.ModelSerializer):
@@ -12,10 +11,10 @@ class UserRetrieveSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'email', 'first_name', 'last_name', 
-            'is_active'
+            'is_active', 'email_verified'
         )
         read_only_fields = ('id', 'email', 'first_name', 
-            'last_name', 'is_active'
+            'last_name', 'is_active', 'email_verified'
             )
 
 

@@ -1,0 +1,7 @@
+from .change_email import change_email_view
+from .create_new_user import create_new_user_view
+from .destroy_auth_token import destroy_auth_token_view
+from .get_auth_token import get_auth_token_view
+from .get_current_user import get_current_user_view
+from .send_verification_code_to_email import send_verification_code_to_email_view
+from .verify_new_user_email import verify_new_user_email_view
