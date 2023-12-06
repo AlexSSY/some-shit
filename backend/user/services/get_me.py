@@ -1,7 +1,10 @@
 from user.serializers import UserRetrieveSerializer
 
+from .types import User
 
-def get_me(request) -> dict:
+
+def get_me(request) -> User:
     """Возвращает словарь с информацией о текущем пользователе."""
 
-    return UserRetrieveSerializer(request.user).data
+    user = User(**UserRetrieveSerializer(request.user).data)
+    return user
