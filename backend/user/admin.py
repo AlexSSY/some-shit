@@ -18,4 +18,4 @@ class ConfirmationCodeAdmin(admin.ModelAdmin):
         """Возвращает значение True если 
         время действия кода истекло"""
 
-        return not services.is_code_expired(obj)
+        return not services.is_verification_code_expired(obj)

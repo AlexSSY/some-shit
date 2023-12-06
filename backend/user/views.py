@@ -4,14 +4,14 @@ from rest_framework.decorators import api_view, permission_classes, parser_class
 from rest_framework import status, parsers, renderers
 from rest_framework.response import Response
 
-from . import services, throttling
+from . import throttling, services
 
 
 @api_view(['GET'])
 def get_me_view(request):
     """Информация о текущем пользователе."""
 
-    return services.get_me(request)
+    return Response(services.get_me(request))
 
 
 @api_view(['POST'])
