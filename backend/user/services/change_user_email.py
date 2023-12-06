@@ -2,10 +2,10 @@ from user.serializers import ConfirmationCodeAndEmailSerializer, \
     UserRetrieveSerializer
 
 from .verify_new_user_email import verify_email_code
-from .types import User
+from .types import UserDict
 
 
-def change_user_email(request) -> User:
+def change_user_email(request) -> UserDict:
     """Изменяет email пользователя"""
 
     serializer = ConfirmationCodeAndEmailSerializer(data=request.data)
@@ -16,4 +16,4 @@ def change_user_email(request) -> User:
     request.user.email = email
     request.user.email_verified = True
     request.user.save()
-    return User(**UserRetrieveSerializer(instance=request.user).data)
+    return UserDict(**UserRetrieveSerializer(instance=request.user).data)

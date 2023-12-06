@@ -4,7 +4,7 @@ from typing import TypedDict
 Email = str
 
 
-class User(TypedDict):
+class UserDict(TypedDict):
     id: int
     email: Email
     first_name: str
